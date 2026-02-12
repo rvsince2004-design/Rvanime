@@ -10,42 +10,66 @@
 
     <style>
         body { font-family: 'Segoe UI', sans-serif; background: #121212; color: #eee; margin: 0; padding: 20px; }
-        .header { text-align: center; margin-bottom: 30px; }
-        h1 { color: #ff4757; }
         
-        /* FIX 2: Added a class for the logo to make it look cleaner */
-        .header-logo { width: 80px; height: 80px; border-radius: 50%; border: 2px solid #ff4757; margin-bottom: 10px; }
+        .header { text-align: center; margin-bottom: 30px; }
+        
+        /* Logo Styling */
+        .header-logo { width: 100px; height: 100px; border-radius: 50%; border: 2px solid #ff4757; margin-bottom: 10px; transition: transform 0.3s; }
+        .header-logo:hover { transform: rotate(10deg) scale(1.1); }
+        
+        h1 { color: #ff4757; margin: 10px 0; }
 
+        /* Search Bar */
         .search-container { text-align: center; margin-bottom: 30px; }
         #search-input { 
-            padding: 12px; width: 60%; border-radius: 25px; border: none; 
+            padding: 12px 20px; width: 60%; border-radius: 25px; border: 2px solid #333; 
             outline: none; font-size: 1rem; background: #222; color: white;
-            border: 2px solid #333;
+            transition: border-color 0.3s;
         }
+        #search-input:focus { border-color: #ff4757; }
 
+        /* Loading Spinner */
+        .loader {
+            border: 5px solid #333;
+            border-top: 5px solid #ff4757;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 50px auto;
+            display: none;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Anime Grid */
         #anime-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px; }
         .anime-card { background: #1e1e1e; border-radius: 10px; overflow: hidden; border: 1px solid #333; cursor: pointer; transition: 0.3s; }
-        .anime-card:hover { transform: translateY(-5px); border-color: #ff4757; }
+        .anime-card:hover { transform: translateY(-5px); border-color: #ff4757; box-shadow: 0 5px 15px rgba(255, 71, 87, 0.3); }
         .anime-card img { width: 100%; height: 300px; object-fit: cover; }
-        .anime-info { padding: 10px; text-align: center; }
+        .anime-info { padding: 15px; text-align: center; }
+        .anime-title { font-size: 0.9rem; font-weight: bold; height: 40px; overflow: hidden; }
 
-        /* Modal (Popup) Styling */
+        /* Video Modal */
         .modal { display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); }
-        .modal-content { position: relative; margin: 5% auto; width: 80%; max-width: 800px; }
-        .close-btn { position: absolute; top: -40px; right: 0; color: white; font-size: 30px; cursor: pointer; }
+        .modal-content { position: relative; margin: 5% auto; width: 90%; max-width: 800px; }
+        .close-btn { position: absolute; top: -45px; right: 0; color: white; font-size: 35px; cursor: pointer; }
         iframe { width: 100%; height: 450px; border-radius: 10px; border: 2px solid #ff4757; }
+
+        /* Footer */
+        footer { text-align: center; padding: 40px; color: #666; border-top: 1px solid #333; margin-top: 50px; font-size: 0.9rem; }
     </style>
 </head>
 <body>
 
     <div class="header">
-        <img src="logo.png" alt="RV Anime Logo" class="header-logo">
+        <img src="logo.png" alt="RV Anime Logo" class="header-logo" onerror="this.src='https://via.placeholder.com/100?text=RV'">
         <h1>RV Anime Explorer</h1>
         <div class="search-container">
-            <input type="text" id="search-input" placeholder="Search and hit Enter...">
+            <input type="text" id="search-input" placeholder="Search for an anime and hit Enter...">
         </div>
     </div>
-    
+
+    <div id="loader" class="loader"></div>
     <div id="anime-container"></div>
 
     <div id="videoModal" class="modal">
@@ -55,26 +79,46 @@
         </div>
     </div>
 
+    <footer>
+        <p>Developed with ❤️ for the Anime Community</p>
+        <p>Data provided by Jikan API (MyAnimeList)</p>
+    </footer>
+
     <script>
         const container = document.getElementById('anime-container');
         const searchInput = document.getElementById('search-input');
+        const loader = document.getElementById('loader');
         const modal = document.getElementById('videoModal');
         const playerArea = document.getElementById('player-area');
         const closeBtn = document.getElementById('closeModal');
 
+        // Fetch Data from Jikan API
         async function getAnime(query = '') {
-            container.innerHTML = '<p>Loading...</p>';
+            loader.style.display = 'block';
+            container.innerHTML = ''; 
+
             const url = query 
                 ? `https://api.jikan.moe/v4/anime?q=${query}&limit=20` 
                 : 'https://api.jikan.moe/v4/top/anime?limit=20';
 
-            const response = await fetch(url);
-            const result = await response.json();
-            displayResults(result.data);
+            try {
+                const response = await fetch(url);
+                const result = await response.json();
+                loader.style.display = 'none';
+                displayResults(result.data);
+            } catch (error) {
+                loader.style.display = 'none';
+                container.innerHTML = '<p style="text-align:center;">Failed to load data. Please check your connection.</p>';
+            }
         }
 
+        // Display Data
         function displayResults(animeList) {
             container.innerHTML = '';
+            if (!animeList || animeList.length === 0) {
+                container.innerHTML = '<p style="text-align:center;">No results found.</p>';
+                return;
+            }
             animeList.forEach(anime => {
                 const card = document.createElement('div');
                 card.className = 'anime-card';
@@ -84,15 +128,15 @@
                         <div class="anime-title">${anime.title}</div>
                     </div>
                 `;
-                
                 card.onclick = () => openTrailer(anime.trailer.embed_url);
                 container.appendChild(card);
             });
         }
 
+        // Modal Logic
         function openTrailer(url) {
             if (!url) {
-                alert("Sorry, no trailer available for this one!");
+                alert("Trailer not available for this title.");
                 return;
             }
             playerArea.innerHTML = `<iframe src="${url}" frameborder="0" allowfullscreen></iframe>`;
@@ -104,9 +148,14 @@
             playerArea.innerHTML = ''; 
         };
 
-        window.onclick = (event) => { if (event.target == modal) closeBtn.onclick(); };
-        searchInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') getAnime(searchInput.value); });
+        window.onclick = (e) => { if (e.target == modal) closeBtn.onclick(); };
 
+        // Search listener
+        searchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') getAnime(searchInput.value);
+        });
+
+        // Initial Load
         getAnime();
     </script>
 </body>
