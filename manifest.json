@@ -1,0 +1,15 @@
+{
+  "name": "RV Anime Explorer",
+  "short_name": "RVAnime",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#121212",
+  "theme_color": "#ff4757",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/3504/3504827.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
