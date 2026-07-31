@@ -10,20 +10,33 @@
     overflow-y: auto;   /* Adds scrollbar */
     list-style: none;
     padding: 0;
+    
+    /* Firefox Scrollbar Support */
+    scrollbar-width: thin;
+    scrollbar-color: #ff4500 #1a1a1a; /* Thumb color | Track color */
 }
 
 #modal-episode-list li {
     padding: 8px;
     border-bottom: 1px solid #222;
     font-size: 0.9rem;
+    transition: background 0.2s ease-in-out; /* Smooth hover transition */
 }
 
-/* Scrollbar Styling for a "Dark Mode" look */
+/* Hover state for better user interaction */
+#modal-episode-list li:hover {
+    background-color: #222;
+    cursor: pointer;
+}
+
+/* Webkit (Chrome, Safari, Edge) Scrollbar Styling */
 #modal-episode-list::-webkit-scrollbar {
     width: 6px;
 }
+#modal-episode-list::-webkit-scrollbar-track {
+    background: #1a1a1a; /* Dark track matching dark mode */
+}
 #modal-episode-list::-webkit-scrollbar-thumb {
-    background: #ff4500; /* Your brand color */
+    background: #ff4500; /* Brand color */
     border-radius: 10px;
 }
-
