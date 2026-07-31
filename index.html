@@ -116,27 +116,45 @@
         const epLoader = document.getElementById('episode-loader');
         const closeBtn = document.getElementById('close-modal');
 
-        // Fetch Data from Jikan API
-        async function getAnime(query = '') {
-            loader.style.display = 'block';
-            container.innerHTML = ''; 
+        // Fetch Data from Jikan API with safety checks and retry logic
+async function getAnime(query = '', retries = 2) {
+    loader.style.display = 'block';
+    container.innerHTML = ''; 
 
-            const url = query 
-                ? `https://api.jikan.moe/v4/anime?q=${encodeURIComponent(query)}&limit=20` 
-                : 'https://api.jikan.moe/v4/top/anime?limit=20';
+    const url = query 
+        ? `https://api.jikan.moe/v4/anime?q=${encodeURIComponent(query)}&limit=20` 
+        : 'https://api.jikan.moe/v4/top/anime?limit=20';
 
-            try {
-                const response = await fetch(url);
-                if (!response.ok) throw new Error('Network error');
-                const result = await response.json();
-                loader.style.display = 'none';
-                displayResults(result.data);
-            } catch (error) {
-                loader.style.display = 'none';
-                container.innerHTML = '<p style="text-align:center;">Failed to load data. Please check your connection.</p>';
-            }
+    try {
+        const response = await fetch(url);
+        
+        // Handle Rate Limits (HTTP 429) by waiting and retrying
+        if (response.status === 429 && retries > 0) {
+            console.warn("Rate limited by Jikan API. Retrying in 1.5 seconds...");
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            return getAnime(query, retries - 1);
         }
 
+        if (!response.ok) {
+            throw new Error(`HTTP Error Status: ${response.status}`);
+        }
+
+        const result = await response.json();
+        loader.style.display = 'none';
+        
+        if (result.data) {
+            displayResults(result.data);
+        } else {
+            throw new Error("Invalid response format");
+        }
+
+    } catch (error) {
+        console.error("Fetch Error:", error);
+        loader.style.display = 'none';
+        container.innerHTML = '<p style="text-align:center;">Failed to load data. Please refresh in a moment.</p>';
+    }
+        }
+        
         // Display Data
         function displayResults(animeList) {
             container.innerHTML = '';
